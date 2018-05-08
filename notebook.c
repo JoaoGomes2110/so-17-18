@@ -12,11 +12,13 @@
 
 #define MAX_CHAR_LINE 1024
 #define MAX_ARGS 100
-int controlo;
+
+int controlo = 0;
 
 
-void handler(){
-	controlo = 1;
+void handler(int sig){
+	if(sig == SIGUSR1)
+		controlo = 1;
 }
 
 char *lerLinha(int fd){
@@ -34,21 +36,23 @@ char *lerLinha(int fd){
 
 int main(){
 	
-	char *linha, *linha_aux, *args[MAX_ARGS], *token;
+	char *linha, *args[MAX_ARGS], *token;
 	int status, i, fd;
 	int file, fd_result;
-	signal(SIGUSR1,handler);
+
+	int fd_tmp[MAX_CHAR_LINE];
+	int j = 0;
 
 	int p[2];
 
 	fd = open("teste.txt", O_RDONLY);
-	fd_result = open("result", O_WRONLY|O_RDONLY|O_CREAT|O_TRUNC,S_IRWXU | S_IRWXG | S_IRWXO);
-
+	fd_result = open("result.txt", O_WRONLY|O_RDONLY|O_CREAT|O_TRUNC,S_IRWXU | S_IRWXG | S_IRWXO);
 
 	if(fd!=-1){
 		while((linha = lerLinha(fd))!=NULL){
 			
 			if (linha[0] == '$' && linha[1] == '|'){	
+				
 				write(fd_result,linha,strlen(linha));
 				write(fd_result,"\n",1);
 
@@ -59,7 +63,7 @@ int main(){
 				write(fd_result,">>>\n",4);
 
 				pipe(p);
-
+				
 				if(fork()==0){
 					close(p[0]);
 
@@ -69,12 +73,20 @@ int main(){
 					dup2(file, 0);
 					execvp(args[0], args);
 					kill(getppid(),SIGUSR1);
+					_exit(0);
 				}
 			
 				wait(&status);
 				close(p[1]);
 
+				signal(SIGUSR1,handler);
 				if(controlo == 0){
+					char* name = (char*) malloc(sizeof(char)*(strlen(linha)+10));
+					sprintf(name,"%d.txt",j);
+				
+					fd_tmp[j] = open(name,O_CREAT | O_RDONLY |O_WRONLY,0666);
+					j++;
+					
 					file = open("tmp",O_TRUNC| O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
 					while((linha = lerLinha(p[0]))){
@@ -93,6 +105,7 @@ int main(){
 				}	
 			}	
 			else if(linha[0] == '$'){
+
 				write(fd_result,linha,strlen(linha));
 				write(fd_result,"\n",1);
 
@@ -105,17 +118,26 @@ int main(){
 
 		  		pipe(p);
 
+
 				if(fork()==0){
 					close(p[0]);
 					dup2(p[1], 1);
 					execvp(args[0], args);
 					kill(getppid(),SIGUSR1);
+					_exit(0);
 				}
 
 				wait(&status);
 				close(p[1]);
+				signal(SIGUSR1,handler);
 
 				if(controlo == 0){
+					char* name = (char*) malloc(sizeof(char)*(strlen(linha)+10));
+					sprintf(name,"%d.txt",j);
+				
+					fd_tmp[j] = open(name,O_CREAT | O_RDONLY |O_WRONLY,0666);
+					j++;
+
 
 					file = open("tmp",O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
