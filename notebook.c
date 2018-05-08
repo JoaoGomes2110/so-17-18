@@ -7,9 +7,17 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
+
 
 #define MAX_CHAR_LINE 1024
 #define MAX_ARGS 100
+int controlo;
+
+
+void handler(){
+	controlo = 1;
+}
 
 char *lerLinha(int fd){
 	char *buffer = (char*) malloc(MAX_CHAR_LINE);
@@ -28,26 +36,27 @@ int main(){
 	
 	char *linha, *linha_aux, *args[MAX_ARGS], *token;
 	int status, i, fd;
-	int comandos = 0;
-	int file, nivel = 0;
+	int file, fd_result;
+	signal(SIGUSR1,handler);
 
 	int p[2];
 
 	fd = open("teste.txt", O_RDONLY);
+	fd_result = open("result", O_WRONLY|O_RDONLY|O_CREAT|O_TRUNC,S_IRWXU | S_IRWXG | S_IRWXO);
 
 
 	if(fd!=-1){
 		while((linha = lerLinha(fd))!=NULL){
+			
 			if (linha[0] == '$' && linha[1] == '|'){	
-				write(1,"$|",2);
-				write(1,linha+2,strlen(linha)+2);
-				write(1,"\n",1);
+				write(fd_result,linha,strlen(linha));
+				write(fd_result,"\n",1);
 
 				for(token = strtok(linha+2, " "), i = 0; token; token = strtok(NULL, " "), i++)
 					args[i] = token;
 					
 				args[i] = NULL;
-				write(1,">>>\n",4);
+				write(fd_result,">>>\n",4);
 
 				pipe(p);
 
@@ -59,36 +68,40 @@ int main(){
 					dup2(p[1], 1);
 					dup2(file, 0);
 					execvp(args[0], args);
-					close(p[1]);
-					close(file);
+					kill(getppid(),SIGUSR1);
 				}
 			
 				wait(&status);
 				close(p[1]);
-				file = open("tmp",O_TRUNC| O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-				while((linha = lerLinha(p[0]))){
-					write(1, linha, strlen(linha));
-					write(file, linha, strlen(linha));
-					write(file,"\n",1);
-					write(1,"\n",1);
+				if(controlo == 0){
+					file = open("tmp",O_TRUNC| O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+
+					while((linha = lerLinha(p[0]))){
+						write(fd_result, linha, strlen(linha));
+						write(file, linha, strlen(linha));
+						write(file,"\n",1);
+						write(fd_result,"\n",1);
+					}	
+
+					close(p[0]);
+					close(file);
+					write(fd_result,"<<<\n",4);
+				}else{
+					perror("COMANDO IMPOSSIVEL DE EXECUTAR");
+					_exit(0);
 				}	
-
-				close(p[0]);
-				close(file);
-				write(1,"<<<\n",4);
 			}	
 			else if(linha[0] == '$'){
-				write(1,"$",1);
-				write(1,linha+1,strlen(linha)+1);	
-				write(1,"\n",1);
+				write(fd_result,linha,strlen(linha));
+				write(fd_result,"\n",1);
 
 				for(token = strtok(linha+1, " "), i = 0; token; token = strtok(NULL, " "), i++){
 					args[i] = token;
 				}
 					
 				args[i] = NULL;
-				write(1,">>>\n",4);
+				write(fd_result,">>>\n",4);
 
 		  		pipe(p);
 
@@ -96,29 +109,35 @@ int main(){
 					close(p[0]);
 					dup2(p[1], 1);
 					execvp(args[0], args);
-					close(p[1]);
+					kill(getppid(),SIGUSR1);
 				}
 
 				wait(&status);
 				close(p[1]);
 
-				file = open("tmp",O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+				if(controlo == 0){
 
-				while((linha = lerLinha(p[0]))){
-							write(1, linha, strlen(linha));
-							write(file, linha, strlen(linha));
-							write(file,"\n",1);
-							write(1,"\n",1);
-				}	
+					file = open("tmp",O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-				close(p[0]);
-				close(file);
-				write(1,"<<<\n",4);
-					
-			}else{
-				write(1,"\n",1);write(1,linha,strlen(linha));
+					while((linha = lerLinha(p[0]))){
+						write(fd_result, linha, strlen(linha));
+						write(file, linha, strlen(linha));
+						write(file,"\n",1);
+						write(fd_result,"\n",1);
+					}	
+
+					close(p[0]);
+					close(file);
+					write(fd_result,"<<<\n",4);
+				}else{
+					perror("COMANDO IMPOSSIVEL DE EXECUTAR");
+					_exit(0);
+				}
 			}
-		} 
+		}
+		close(fd_result);
+		remove("teste.txt");
+		rename("result","teste.txt");
 	}else{
 		perror("ERRO AO LER O FICHEIRO");
 	} 
