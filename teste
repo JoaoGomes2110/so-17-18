@@ -1,0 +1,7 @@
+$ ls -l
+$| head -3
+$| sort
+$| head -2
+$2| head -1
+$5| sort  
+
