@@ -36,12 +36,10 @@ int main(){
 	fd = open("teste.txt", O_RDONLY);
 
 
-	if(fd!=-1)
-	{
-		while((linha = lerLinha(fd))!=NULL)
-		{
-			if (linha[0] == '$' && linha[1] == '|')
-			{	write(1,"$|",2);
+	if(fd!=-1){
+		while((linha = lerLinha(fd))!=NULL){
+			if (linha[0] == '$' && linha[1] == '|'){	
+				write(1,"$|",2);
 				write(1,linha+2,strlen(linha)+2);
 				write(1,"\n",1);
 
@@ -53,8 +51,7 @@ int main(){
 
 				pipe(p);
 
-				if(fork()==0)
-				{
+				if(fork()==0){
 					close(p[0]);
 
 					file = open("tmp", O_RDONLY);
@@ -65,87 +62,67 @@ int main(){
 					close(p[1]);
 					close(file);
 				}
-				else
-				{
+			
+				wait(&status);
+				close(p[1]);
+				file = open("tmp",O_TRUNC| O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-					wait(&status);
-					close(p[1]);
+				while((linha = lerLinha(p[0]))){
+					write(1, linha, strlen(linha));
+					write(file, linha, strlen(linha));
+					write(file,"\n",1);
+					write(1,"\n",1);
+				}	
 
-					file = open("tmp",O_TRUNC| O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-
-
-					//if(file<0) printf("\n\nFODASSE!\n\n");
-
-
-					while((linha = lerLinha(p[0])))
-					{
-						write(1, linha, strlen(linha));
-						write(file, linha, strlen(linha));
-						write(file,"\n",1);
-						write(1,"\n",1);
-					}	
-
-					close(p[0]);
-					close(file);
-				}
+				close(p[0]);
+				close(file);
 				write(1,"<<<\n",4);
 			}	
-			else
-			{
+			else if(linha[0] == '$'){
+				write(1,"$",1);
+				write(1,linha+1,strlen(linha)+1);	
+				write(1,"\n",1);
 
-				if (linha[0] == '$')
-				{
-					write(1,"$",1);
-					write(1,linha+1,strlen(linha)+1);	
-					write(1,"\n",1);
-
-					//printf("$%s\n", linha + 1);
-
-					for(token = strtok(linha+1, " "), i = 0; token; token = strtok(NULL, " "), i++)
-						args[i] = token;
+				for(token = strtok(linha+1, " "), i = 0; token; token = strtok(NULL, " "), i++){
+					args[i] = token;
+				}
 					
-					args[i] = NULL;
-					write(1,">>>\n",4);
+				args[i] = NULL;
+				write(1,">>>\n",4);
 
-		  			pipe(p);
+		  		pipe(p);
 
-					if(fork()==0)
-					{
-						close(p[0]);
-						dup2(p[1], 1);
-						execvp(args[0], args);
-						close(p[1]);
-					}
-					else
-					{
+				if(fork()==0){
+					close(p[0]);
+					dup2(p[1], 1);
+					execvp(args[0], args);
+					close(p[1]);
+				}
 
-						wait(&status);
-						close(p[1]);
+				wait(&status);
+				close(p[1]);
 
-						file = open("tmp",O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+				file = open("tmp",O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-						while((linha = lerLinha(p[0])))
-						{
+				while((linha = lerLinha(p[0]))){
 							write(1, linha, strlen(linha));
 							write(file, linha, strlen(linha));
 							write(file,"\n",1);
 							write(1,"\n",1);
-						}	
+				}	
 
-						close(p[0]);
-						close(file);
-					}
-					write(1,"<<<\n",4);
+				close(p[0]);
+				close(file);
+				write(1,"<<<\n",4);
 					
-				}
-				else{write(1,"\n",1);write(1,linha,strlen(linha));}
+			}else{
+				write(1,"\n",1);write(1,linha,strlen(linha));
 			}
-			
-		} // Fim de while
-	}else perror("ERRO AO LER O FICHEIRO");
-
+		} 
+	}else{
+		perror("ERRO AO LER O FICHEIRO");
+	} 
 	return 0;
-	
 }
 
 	
