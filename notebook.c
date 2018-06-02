@@ -41,7 +41,7 @@ int main(){
 	
 	char *linha, *args[MAX_ARGS], *token;
 	int status, i, fd, num;
-	int file, fd_result;
+	int file = 0, fd_result;
 	char* name = (char*) malloc(sizeof(char)*10);
 	int fd_tmp[MAX_CHAR_LINE];
 	j = 0;

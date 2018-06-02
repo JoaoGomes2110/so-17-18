@@ -1,43 +1,12 @@
-$ ls -l
->>>
-total 116
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
--rwxr-xr-x 1 gomes gomes 13888 Mai  9 14:57 notebook
--rw-r--r-- 1 gomes gomes  4970 Mai  9 09:23 notebook.c
--rw-r--r-- 1 gomes gomes    10 Mai  7 14:35 README.md
--rwxr-xr-x 1 gomes gomes    12 Mai  9 14:58 result.txt
--rwxr-xr-x 1 gomes gomes    62 Mai  9 09:23 teste
--rw-r--r-- 1 gomes gomes   122 Mai  7 14:35 teste.txt
-<<<
-$| head -3
->>>
-total 116
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
--rwxr-xr-x 1 gomes gomes 13888 Mai  9 14:57 notebook
-<<<
+Este comando lista os ficheiros:
+$ ls
+Agora podemos ordenar estes ficheiros:
 $| sort
->>>
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
--rwxr-xr-x 1 gomes gomes 13888 Mai  9 14:57 notebook
-total 116
-<<<
-$| head -2
->>>
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
--rwxr-xr-x 1 gomes gomes 13888 Mai  9 14:57 notebook
-<<<
+E escolher o primeiro:
+$2| head -5
+Tail do anterior
+$| tail -1
+Grep do ls
+$4| grep notebook
+Head do Tail
 $2| head -1
->>>
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
-<<<
-$5| sort  
->>>
--rw-r--r-- 1 gomes gomes    10 Mai  7 14:35 README.md
--rw-r--r-- 1 gomes gomes   122 Mai  7 14:35 teste.txt
--rw-r--r-- 1 gomes gomes  4970 Mai  9 09:23 notebook.c
--rw-r--r-- 1 gomes gomes 74687 Mai  7 14:35 enunciado-so-2017-18.pdf
--rwxr-xr-x 1 gomes gomes    12 Mai  9 14:58 result.txt
--rwxr-xr-x 1 gomes gomes 13888 Mai  9 14:57 notebook
--rwxr-xr-x 1 gomes gomes    62 Mai  9 09:23 teste
-total 116
-<<<
